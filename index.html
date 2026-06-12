@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quiz — Clínica Médica de Grandes Animais</title>
+<style>
+  :root {
+    --primary: #1a4a8a;
+    --primary-dark: #0d2d5e;
+    --primary-light: #2563b0;
+    --accent: #e8a020;
+    --accent-light: #fbbf24;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --bg: #f0f4f9;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #cbd5e1;
+    --radius: 14px;
+    --shadow: 0 4px 24px rgba(26,74,138,0.13);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
+    color: #fff;
+    padding: 28px 20px 24px;
+    text-align: center;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  }
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .header h1 { font-size: clamp(1.2rem, 4vw, 1.7rem); font-weight: 800; line-height: 1.3; }
+  .header p  { font-size: 0.88rem; opacity: .82; margin-top: 6px; }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; max-width: 700px; margin: 0 auto; padding: 28px 16px; }
+  .screen.active { display: block; }
+
+  /* ─── CARD ─── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 28px;
+    margin-bottom: 20px;
+  }
+
+  /* ─── ENTRADA ─── */
+  .card h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 18px; text-align: center; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 6px; color: var(--text-muted); }
+  .form-group input, .form-group select {
+    width: 100%; padding: 12px 14px;
+    border: 2px solid var(--border); border-radius: 9px;
+    font-size: .95rem; color: var(--text);
+    transition: border .2s;
+    background: #f8fafc;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: var(--primary);
+    background: #fff;
+  }
+
+  .info-box {
+    background: #eff6ff; border: 1.5px solid #bfdbfe;
+    border-radius: 10px; padding: 14px 16px; margin: 18px 0;
+    font-size: .86rem; color: #1e40af; line-height: 1.6;
+  }
+  .info-box strong { display: block; margin-bottom: 4px; font-size: .9rem; }
+
+  /* ─── BOTÕES ─── */
+  .btn {
+    display: block; width: 100%; padding: 14px;
+    border: none; border-radius: 10px; font-size: 1rem;
+    font-weight: 700; cursor: pointer; transition: all .2s;
+    text-align: center; letter-spacing: .3px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff; box-shadow: 0 4px 14px rgba(26,74,138,.28);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,74,138,.36); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-secondary {
+    background: #e2e8f0; color: var(--primary);
+    margin-top: 10px;
+  }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
+
+  /* ─── QUIZ ─── */
+  .quiz-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 18px; flex-wrap: wrap; gap: 8px;
+  }
+  .q-counter { font-weight: 700; color: var(--primary); font-size: .95rem; }
+  .q-score-live { font-weight: 700; color: var(--accent); font-size: .95rem; }
+
+  /* Timer */
+  .timer-wrap { text-align: center; margin-bottom: 16px; }
+  .timer-ring { position: relative; width: 64px; height: 64px; margin: 0 auto; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring circle { fill: none; stroke-width: 5; }
+  .timer-bg  { stroke: #e2e8f0; }
+  .timer-arc { stroke: var(--primary); stroke-linecap: round;
+               stroke-dasharray: 163; stroke-dashoffset: 0;
+               transition: stroke-dashoffset .95s linear, stroke .5s; }
+  .timer-arc.warn  { stroke: var(--warning); }
+  .timer-arc.urgent{ stroke: var(--danger); }
+  .timer-num {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-size: 1.15rem; font-weight: 800; color: var(--primary);
+  }
+  .timer-num.warn   { color: var(--warning); }
+  .timer-num.urgent { color: var(--danger); }
+
+  /* Progress */
+  .progress-bar { height: 6px; background: #e2e8f0; border-radius: 3px; margin-bottom: 20px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width .4s; }
+
+  /* Questão */
+  .question-text {
+    font-size: 1.02rem; font-weight: 600; line-height: 1.55;
+    color: var(--text); margin-bottom: 22px;
+    padding: 16px; background: #f8fafc;
+    border-left: 4px solid var(--primary); border-radius: 8px;
+  }
+
+  /* Alternativas */
+  .opts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 16px; border-radius: 10px;
+    border: 2px solid var(--border);
+    cursor: pointer; transition: all .18s;
+    background: #fff; font-size: .93rem;
+  }
+  .opt:hover:not(.locked) { border-color: var(--primary-light); background: #eff6ff; transform: translateX(3px); }
+  .opt.selected { border-color: var(--primary); background: #dbeafe; }
+  .opt.correct  { border-color: var(--success); background: #dcfce7 !important; }
+  .opt.wrong    { border-color: var(--danger);  background: #fee2e2 !important; }
+  .opt.locked   { cursor: default; }
+  .opt-letter {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; font-weight: 700; flex-shrink: 0;
+    transition: background .18s;
+  }
+  .opt.selected .opt-letter { background: var(--primary-dark); }
+  .opt.correct  .opt-letter { background: var(--success); }
+  .opt.wrong    .opt-letter { background: var(--danger); }
+  .opt-text { flex: 1; line-height: 1.45; }
+
+  /* Feedback */
+  .feedback {
+    display: none; padding: 12px 16px; border-radius: 9px;
+    font-size: .88rem; font-weight: 600; margin-bottom: 16px;
+    text-align: center;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok  { background: #dcfce7; color: #166534; border: 1.5px solid #86efac; }
+  .feedback.err { background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; }
+  .feedback.time{ background: #fef3c7; color: #92400e; border: 1.5px solid #fcd34d; }
+
+  /* Btn avançar */
+  .btn-next {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff; border: none; border-radius: 10px;
+    padding: 14px; width: 100%; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: all .2s;
+    display: block;
+    margin-top: 6px;
+  }
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,74,138,.36); }
+  .btn-next:active { transform: translateY(0); }
+
+  /* ─── RESULTADO ─── */
+  .result-score {
+    text-align: center; padding: 28px 20px;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+    border-radius: var(--radius); color: #fff; margin-bottom: 22px;
+  }
+  .result-score .nota { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+  .result-score .label{ font-size: .85rem; opacity: .8; margin-top: 4px; }
+  .result-score .max  { font-size: 1rem; opacity: .7; margin-top: 6px; }
+
+  .result-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; margin-bottom: 22px;
+  }
+  .result-item {
+    text-align: center; padding: 18px 10px;
+    background: var(--card); border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  }
+  .result-item .val { font-size: 2rem; font-weight: 800; }
+  .result-item .lbl { font-size: .78rem; color: var(--text-muted); margin-top: 4px; }
+  .result-item.acc .val { color: var(--success); }
+  .result-item.err .val { color: var(--danger); }
+
+  .msg-result {
+    text-align: center; padding: 14px; border-radius: 10px;
+    font-weight: 600; font-size: .95rem; margin-bottom: 20px;
+  }
+  .msg-result.excelente{ background: #dcfce7; color: #166534; }
+  .msg-result.bom      { background: #dbeafe; color: #1e40af; }
+  .msg-result.regular  { background: #fef3c7; color: #92400e; }
+  .msg-result.fraco    { background: #fee2e2; color: #991b1b; }
+
+  /* Gabarito */
+  .gabarito { margin-top: 24px; }
+  .gabarito h3 { font-size: 1rem; color: var(--primary); margin-bottom: 12px; text-align: center; }
+  .gab-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 11px 14px; border-radius: 9px;
+    margin-bottom: 8px; font-size: .85rem;
+    border: 1.5px solid var(--border);
+  }
+  .gab-item.hit { border-color: #86efac; background: #f0fdf4; }
+  .gab-item.miss{ border-color: #fca5a5; background: #fff5f5; }
+  .gab-num { font-weight: 800; min-width: 22px; }
+  .gab-q   { flex: 1; color: var(--text-muted); line-height: 1.4; }
+  .gab-a   { font-weight: 600; font-size: .82rem; }
+  .gab-icon{ font-size: 1rem; }
+
+  /* Saving */
+  .saving-msg {
+    text-align: center; padding: 10px;
+    font-size: .83rem; color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  /* Responsive */
+  @media(max-width:480px){
+    .card { padding: 20px 16px; }
+    .result-grid { grid-template-columns: 1fr 1fr; }
+    .nota { font-size: 2.8rem !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">Clínica Médica de Grandes Animais</div>
+  <h1>Timpanismo &amp; Cetose em Ruminantes</h1>
+  <p>Quiz Avaliativo · Prof. Mv. Esp. José Alírio S. O. Júnior</p>
+</div>
+
+<!-- ══════════════ TELA 1 — IDENTIFICAÇÃO ══════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="card">
+    <h2>📋 Identificação do Aluno</h2>
+    <div class="form-group">
+      <label>Nome completo</label>
+      <input type="text" id="inp-nome" placeholder="Digite seu nome completo" autocomplete="name"/>
+    </div>
+    <div class="info-box">
+      <strong>📌 Instruções</strong>
+      ✦ 10 questões · 0,5 ponto cada · total 5,0 pontos<br/>
+      ✦ 30 segundos por questão — você pode trocar de alternativa enquanto o tempo corre<br/>
+      ✦ Ao clicar em <b>Avançar</b> a resposta é confirmada — sem volta<br/>
+      ✦ Uma única tentativa por aluno<br/>
+      ✦ Resultado registrado automaticamente
+    </div>
+    <button class="btn btn-primary" onclick="iniciar()">Iniciar Quiz →</button>
+  </div>
+</div>
+
+<!-- ══════════════ TELA 2 — QUIZ ══════════════ -->
+<div id="screen-quiz" class="screen">
+  <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+  <div class="quiz-meta">
+    <span class="q-counter" id="q-counter">Questão 1 / 10</span>
+    <span class="q-score-live" id="score-live">Pontos: 0,0</span>
+  </div>
+
+  <div class="timer-wrap">
+    <div class="timer-ring">
+      <svg viewBox="0 0 56 56" width="64" height="64">
+        <circle class="timer-bg" cx="28" cy="28" r="26"/>
+        <circle class="timer-arc" id="timer-arc" cx="28" cy="28" r="26"/>
+      </svg>
+      <div class="timer-num" id="timer-num">30</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="question-text" id="q-text"></div>
+    <div class="opts" id="opts-wrap"></div>
+    <div class="feedback" id="feedback" style="display:none!important"></div>
+    <button class="btn-next" id="btn-next" onclick="avancar()">Avançar ▶</button>
+  </div>
+</div>
+
+<!-- ══════════════ TELA 3 — RESULTADO ══════════════ -->
+<div id="screen-result" class="screen">
+  <div class="result-score">
+    <div class="nota" id="res-nota">0,0</div>
+    <div class="label">Nota Final</div>
+    <div class="max">Máximo: 5,0 pontos</div>
+  </div>
+
+  <div class="result-grid">
+    <div class="result-item acc">
+      <div class="val" id="res-acc">0</div>
+      <div class="lbl">Acertos</div>
+    </div>
+    <div class="result-item err">
+      <div class="val" id="res-err">0</div>
+      <div class="lbl">Erros</div>
+    </div>
+  </div>
+
+  <div class="msg-result" id="msg-result"></div>
+  <div class="saving-msg" id="saving-msg">⏳ Registrando resultado…</div>
+
+  <div class="gabarito">
+    <h3>📝 Gabarito Comentado</h3>
+    <div id="gabarito-wrap"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIGURAÇÃO
+   ═══════════════════════════════════════════ */
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybNgd6UAWziogdSlcEVKuG1zKxgOwAIpJG17CQNzgJpps6eJ2uTUZtKJAvFusSSOYV7w/exec';
+const ABA_SHEETS        = 'Quiz 2';
+const DISCIPLINA        = 'Clínica Médica de Grandes Animais';
+const TEMPO_POR_QUESTAO = 30;   // segundos
+const PONTOS_POR_ACERTO = 0.5;  // pontos
+const TOTAL_QUESTOES    = 10;
+
+/* ═══════════════════════════════════════════
+   BANCO DE QUESTÕES
+   (gabaritos distribuídos: A×3, B×2, C×3, D×2)
+   ═══════════════════════════════════════════ */
+const BANCO = [
+  // ─── Q01 ───
+  {
+    q: "No timpanismo gasoso primário, a acumulação de gás no rúmen ocorre por qual mecanismo principal?",
+    opts: [
+      "Falha na eructação por compressão do esôfago ou inibição do reflexo eructivo",
+      "Excesso de produção de espuma impedindo a saída de gás",
+      "Obstrução do piloro por partículas alimentares grosseiras",
+      "Hiperfermentação por Clostridium perfringens tipo A"
+    ],
+    c: 0,
+    coment: "No timpanismo gasoso livre, o gás acumula-se na câmara dorsal do rúmen por falha no reflexo de eructação — compressão esofágica, disfunção vagal ou obstrução física."
+  },
+  // ─── Q02 ───
+  {
+    q: "Qual ácido graxo volátil produzido no rúmen é cetogênico e contribui para cetose quando em excesso (ex.: silagem mal conservada)?",
+    opts: [
+      "Ácido propiônico",
+      "Ácido butírico",
+      "Ácido succínico",
+      "Ácido láctico"
+    ],
+    c: 1,
+    coment: "O ácido butírico é convertido em acetil-CoA e, sem oxalacetato suficiente, desviado para corpos cetônicos. Silagens ricas em butirato induzem cetose mesmo em vacas aparentemente sadias."
+  },
+  // ─── Q03 ───
+  {
+    q: "Vaca leiteira, 15 dias pós-parto, apresenta anorexia seletiva, hálito adocicado e queda brusca na produção de leite. Teste de Rothera no leite positivo. Diagnóstico mais provável?",
+    opts: [
+      "Deslocamento de abomaso à esquerda",
+      "Hipocalcemia puerperal",
+      "Cetose clínica primária",
+      "Reticuloperitonite traumática"
+    ],
+    c: 2,
+    coment: "Anorexia seletiva, hálito cetônico e Rothera positivo no leite no pós-parto recente são clássicos de cetose clínica primária. Hipocalcemia cursa com paresia; deslocamento com ping metálico ao flanco."
+  },
+  // ─── Q04 ───
+  {
+    q: "Qual medida preventiva de manejo é mais eficaz para reduzir o timpanismo espumoso em bovinos em pastagem de leguminosas?",
+    opts: [
+      "Antibióticos no concentrado para alterar a flora ruminal",
+      "Vacinação semestral contra clostridioses",
+      "Restringir o acesso à água 2 horas antes do pastejo",
+      "Fornecer feno ou volumoso seco antes do acesso à pastagem úmida de leguminosas"
+    ],
+    c: 3,
+    coment: "Oferecer feno antes do pastejo aumenta a fibra efetiva no rúmen, estimula ruminação e salivação tamponante, além de reduzir a taxa de ingestão de proteínas espumantes — principal medida preventiva de manejo."
+  },
+  // ─── Q05 ───
+  {
+    q: "No tratamento do timpanismo espumoso bovino, qual é o princípio ativo do Ruminol e seu mecanismo de ação?",
+    opts: [
+      "Óleo mineral + dióxido de silício — reduz a tensão superficial das bolhas de espuma via sonda orogástrica",
+      "Poloxaleno — surfactante iônico que alcaliniza o rúmen inibindo a fermentação",
+      "Neostigmina — estimula a motilidade ruminal acelerando o esvaziamento do rúmen",
+      "Flunixin meglumine — anti-inflamatório que reduz a produção de espuma pela mucosa ruminal"
+    ],
+    c: 0,
+    coment: "O Ruminol contém óleo mineral associado a dióxido de silício (antiespumante). O óleo mineral reduz a tensão superficial das bolhas, enquanto o dióxido de silício estabiliza esse efeito — permitindo a coalescência do gás para eructação. Administrado via sonda orogástrica."
+  },
+  // ─── Q06 ───
+  {
+    q: "Qual é a principal consequência metabólica do balanço energético negativo (BEN) nas vacas leiteiras nas primeiras semanas de lactação?",
+    opts: [
+      "Hiperglicemia por resistência à insulina periférica",
+      "Mobilização excessiva de AGNE com sobrecarga hepática e cetogênese",
+      "Alcalose metabólica por consumo excessivo de bicarbonato salivar",
+      "Hipercalcemia por reabsorção óssea estimulada pelo PTH"
+    ],
+    c: 1,
+    coment: "No BEN, a lipólise maciça libera AGNE em excesso. O fígado, sem oxalacetato suficiente, desvia o acetil-CoA para corpos cetônicos — base fisiopatológica da cetose bovina no pós-parto."
+  },
+  // ─── Q07 ───
+  {
+    q: "Em bovinos com timpanismo gasoso agudo grave, qual procedimento é indicado quando não é possível passar a sonda?",
+    opts: [
+      "Trocarização na fossa paralombar esquerda com trocarte e cânula",
+      "Ruminotomia de urgência no flanco direito sob anestesia geral",
+      "Lavagem ruminal com 20 litros de água morna via sonda nasogástrica",
+      "Administração IV de neostigmina para estimular a motilidade ruminal"
+    ],
+    c: 0,
+    coment: "A trocarização na fossa paralombar esquerda permite o escape imediato do gás livre acumulado no saco dorsal do rúmen — procedimento de emergência quando a sonda não pode ser passada."
+  },
+  // ─── Q08 ───
+  {
+    q: "A cetose subclínica em bovinos leiteiros é definida laboratorialmente por qual valor de BHB plasmático, sem sinais clínicos?",
+    opts: [
+      "BHB > 0,6 mmol/L nas primeiras 4 semanas",
+      "BHB > 1,4 mmol/L nas primeiras semanas de lactação",
+      "BHB > 3,0 mmol/L associado a glicemia normal",
+      "BHB > 5,0 mmol/L com cetonúria negativa"
+    ],
+    c: 1,
+    coment: "Cetose subclínica: BHB > 1,4 mmol/L sem sinais clínicos. Apesar de silenciosa, causa queda na produção, comprometimento reprodutivo e maior suscetibilidade a doenças concomitantes."
+  },
+  // ─── Q09 ───
+  {
+    q: "No tratamento padrão da cetose clínica bovina, qual é a principal limitação da infusão IV de glicose a 50% (500 mL)?",
+    opts: [
+      "Risco de hemólise osmótica em vacas Jersey",
+      "Hiperglicemia transitória (2–3 h) com risco de recidiva, sem corrigir o BEN subjacente",
+      "Contraindicação absoluta em vacas com lipidose hepática",
+      "Inativação dos glicocorticóides endógenos por feedback negativo prolongado"
+    ],
+    c: 1,
+    coment: "A glicose IV gera hiperglicemia por apenas 2–3 horas e estimula insulina, mas não corrige o BEN. Recidivas são comuns — recomenda-se repetir e associar propilenoglicol oral."
+  },
+  // ─── Q10 ───
+  {
+    q: "Qual é o principal objetivo do uso de propilenoglicol no tratamento e prevenção da cetose bovina?",
+    opts: [
+      "Aumentar a produção de ácido butírico no rúmen para energia imediata",
+      "Inibir a lipase hormônio-sensível reduzindo a mobilização de gordura",
+      "Fornecer precursor glicogênico que eleva a glicemia via conversão hepática",
+      "Estimular a motilidade ruminal e aumentar a ingestão de matéria seca"
+    ],
+    c: 2,
+    coment: "O propilenoglicol é convertido no fígado em piruvato e oxalacetato via piruvato carboxilase, aumentando os precursores gliconeogênicos e reduzindo a cetogênese. Dose: 150–225 mL duas vezes ao dia."
+  },
+  // ─── Q11 ───
+  {
+    q: "Qual das seguintes condições predispõe diretamente ao timpanismo gasoso secundário em bovinos?",
+    opts: [
+      "Pastagem de azevém com alta umidade",
+      "Obstrução esofágica por corpo estranho (engasgo)",
+      "Excesso de concentrado rico em amido na dieta",
+      "Deficiência de cobalto na pastagem"
+    ],
+    c: 1,
+    coment: "O timpanismo gasoso secundário ocorre quando a eructação é fisicamente impedida — a obstrução esofágica por corpo estranho é causa clássica, bloqueando a passagem do gás acumulado no rúmen."
+  },
+  // ─── Q12 ───
+  {
+    q: "Na cetose bovina, qual corpo cetônico é predominante na circulação sanguínea e o mais utilizado para diagnóstico laboratorial?",
+    opts: [
+      "Acetona",
+      "Ácido acetoacético (AcAc)",
+      "Ácido beta-hidroxibutírico (BHB)",
+      "Ácido isopropílico"
+    ],
+    c: 2,
+    coment: "O BHB é o corpo cetônico predominante na circulação, mais estável em amostras que o AcAc, e é o principal marcador laboratorial tanto para cetose clínica quanto subclínica."
+  },
+  // ─── Q13 ───
+  {
+    q: "Qual é a relação entre cetose subclínica e deslocamento de abomaso em vacas leiteiras?",
+    opts: [
+      "São condições independentes sem relação epidemiológica comprovada",
+      "Apenas a cetose clínica, e não a subclínica, está associada ao deslocamento",
+      "O deslocamento de abomaso protege contra cetose por aumentar a absorção de propionato",
+      "Vacas com BHB > 1,4 mmol/L nas primeiras 2 semanas têm risco 4x maior de desenvolver deslocamento de abomaso"
+    ],
+    c: 3,
+    coment: "Estudos mostram que vacas com BHB sérico > 1,4 mmol/L nas primeiras 2 semanas de lactação têm probabilidade 4:1 maior de desenvolver deslocamento de abomaso 1–3 semanas depois — relação bidirecional comprovada."
+  },
+  // ─── Q14 ───
+  {
+    q: "O teste de Rothera positivo indica presença de quais corpos cetônicos na amostra?",
+    opts: [
+      "BHB e acetona apenas",
+      "Todos os três corpos cetônicos igualmente",
+      "BHB e ácido acetoacético exclusivamente",
+      "Acetona e ácido acetoacético (AcAc)"
+    ],
+    c: 3,
+    coment: "O reagente de Rothera (nitroprussiato de sódio) reage com acetona e AcAc, produzindo cor púrpura. Ele NÃO detecta BHB — por isso testes positivos na urina devem ser confirmados também no leite."
+  },
+  // ─── Q15 ───
+  {
+    q: "Em ovelhas com toxemia da prenhez, qual característica clínica e epidemiológica diferencia essa condição da cetose clínica de vacas leiteiras?",
+    opts: [
+      "Ocorre no início da lactação com prognóstico favorável",
+      "Acomete exclusivamente animais com feto único de grande porte",
+      "Ocorre no terço final da gestação, com acidose metabólica grave, falha renal e letalidade próxima a 100% sem tratamento",
+      "Apresentação exclusivamente subclínica em ovinos"
+    ],
+    c: 2,
+    coment: "A toxemia da prenhez ovina é uma emergência do terço final gestacional, mais grave que em bovinos: acidose metabólica intensa, falha renal aguda e mortalidade próxima a 100% sem intervenção. Animais com gêmeos e trigêmeos são os de maior risco."
+  },
+  // ─── Q16 ───
+  {
+    q: "Qual dos seguintes sinais clínicos é típico da forma digestiva da cetose bovina, que representa cerca de 86% dos casos?",
+    opts: [
+      "Perda gradual do apetite, atonia ruminal, fezes firmes e queda na produção leiteira",
+      "Andar em círculos, head pressing e agressividade intensa",
+      "Convulsões e tetania com reflexo pupilar abolido",
+      "Paresia flácida dos membros posteriores com decúbito permanente"
+    ],
+    c: 0,
+    coment: "A forma digestiva/debilitante da cetose (86% dos casos) cursa com anorexia progressiva, atonia ruminal, fezes endurecidas, perda de condição corporal e queda lenta da produção leiteira — sem os sinais neurológicos da forma nervosa."
+  },
+  // ─── Q17 ───
+  {
+    q: "Por que ruminantes são particularmente vulneráveis à cetose em comparação com monogástricos?",
+    opts: [
+      "Porque absorvem glicose diretamente do intestino em menor quantidade, dependendo da gliconeogênese hepática a partir de AGV",
+      "Porque possuem maior número de receptores de insulina no tecido adiposo",
+      "Porque fermentam proteínas preferencialmente a carboidratos no rúmen",
+      "Porque excretam corpos cetônicos mais lentamente pelos rins"
+    ],
+    c: 0,
+    coment: "Em ruminantes, 80% dos carboidratos da dieta são fermentados a AGV no rúmen — pouca glicose chega ao intestino. A glicose é obtida quase que exclusivamente por gliconeogênese hepática, tornando o animal vulnerável quando os precursores gliconeogênicos escasseiam."
+  },
+  // ─── Q18 ───
+  {
+    q: "Qual dos seguintes fatores de risco está diretamente associado ao aumento da incidência de cetose em rebanhos leiteiros?",
+    opts: [
+      "Escore de condição corporal (ECC) inferior a 2,0 no parto",
+      "Primíparas com alta produção individual",
+      "Vacas com histórico de cetose em lactações anteriores e ECC elevado no parto",
+      "Dieta com excesso de fibra longa no período de transição"
+    ],
+    c: 2,
+    coment: "Vacas com histórico de cetose em lactações anteriores e ECC elevado (acima de 3,5) no parto têm incidência significativamente maior — a gordura intra-abdominal limita a ingestão de MS e a obesidade predispõe à lipólise excessiva."
+  },
+  // ─── Q19 ───
+  {
+    q: "Qual é a diferença entre o timpanismo espumoso primário e o timpanismo espumoso secundário em ruminantes?",
+    opts: [
+      "O primário ocorre por obstrução esofágica; o secundário por ingestão excessiva de leguminosas",
+      "O primário está associado à ingestão de leguminosas ou cereais úmidos; o secundário decorre de outras doenças que alteram a motilidade ruminal",
+      "O primário ocorre em ovinos; o secundário exclusivamente em bovinos",
+      "O primário é tratado com trocarização; o secundário responde apenas a antibióticos"
+    ],
+    c: 1,
+    coment: "O timpanismo espumoso primário resulta da ingestão de alimentos com alto teor de proteínas espumantes (leguminosas frescas, cereais úmidos). O secundário é consequência de doenças que comprometem a motilidade do retículo-rúmen, como indigestão vagal, reduzindo a eructação eficaz e favorecendo o acúmulo de espuma."
+  },
+  // ─── Q20 ───
+  {
+    q: "Qual é o papel dos glicocorticóides (ex.: dexametasona) no tratamento da cetose clínica bovina?",
+    opts: [
+      "Estimulam diretamente a produção de insulina pelo pâncreas",
+      "Inibem a lipase hormônio-sensível no tecido adiposo, bloqueando a cetogênese",
+      "Estimulam a gliconeogênese hepática e redistribuem glicose, elevando a glicemia em 24 horas",
+      "Aumentam a motilidade ruminal, melhorando a absorção de propionato"
+    ],
+    c: 2,
+    coment: "Os glicocorticóides estimulam a gliconeogênese e inibem o uso periférico de glicose, elevando a glicemia em até 24 horas. Dose única de dexametasona 20 mg IV é o protocolo mais utilizado, podendo ser repetida em 2–3 dias se necessário."
+  },
+  // ─── Q21 ───
+  {
+    q: "Na fisiopatologia da cetose, qual é o papel do propionato ruminal e por que sua redução é determinante para o desenvolvimento da doença?",
+    opts: [
+      "O propionato é cetogênico — sua redução diminui a produção de corpos cetônicos",
+      "O propionato é o principal AGV glicogênico — entra no ciclo de Krebs via succinil-CoA e sua redução leva à hipoglicemia e cetogênese",
+      "O propionato inibe diretamente a lipase hepática — sua redução aumenta a lipólise periférica",
+      "O propionato é fonte de oxalacetato apenas em ovinos — em bovinos sua função é exclusivamente energética"
+    ],
+    c: 1,
+    coment: "O propionato é o único AGV glicogênico relevante em ruminantes — entra no ciclo de Krebs ao nível do succinil-CoA e representa 30–50% da produção de glicose hepática. Sua redução (por baixo consumo de MS, silagem butírica ou deficiência de cobalto/B12) leva à hipoglicemia e desvio do acetil-CoA para cetogênese."
+  },
+  // ─── Q22 ───
+  {
+    q: "Uma ovelha no último mês de gestação com trigêmeos apresenta relutância ao movimento, cegueira aparente e decúbito. Qual é o diagnóstico e a conduta imediata?",
+    opts: [
+      "Hipocalcemia — administrar gluconato de cálcio IV lentamente",
+      "Toxemia da prenhez — glicose IV, propilenoglicol oral e considerar indução do parto",
+      "Listeriose — antibioticoterapia com penicilina G sódica IV",
+      "Polioencefalomalacia — tiamina IM em doses altas"
+    ],
+    c: 1,
+    coment: "Ovelha com gestação múltipla (trigêmeos), no terço final, com sinais nervosos e decúbito — quadro clássico de toxemia da prenhez. Tratamento: glicose IV, propilenoglicol oral, e nos casos graves, indução do parto com glicocorticóides ou cesariana."
+  },
+  // ─── Q23 ───
+  {
+    q: "Qual estrutura anatômica é responsável pela distensão característica do flanco esquerdo no timpanismo gasoso bovino?",
+    opts: [
+      "Saco ventral do rúmen repleto de líquido fermentado",
+      "Retículo herniado para o espaço peritoneal esquerdo",
+      "Omaso deslocado cranialmente pela pressão do gás",
+      "Saco dorsal do rúmen distendido pelo gás livre acumulado"
+    ],
+    c: 3,
+    coment: "O gás livre acumula-se no saco dorsal do rúmen, que se projeta na fossa paralombar esquerda, causando a distensão característica visível e palpável nessa região."
+  },
+  // ─── Q24 ───
+  {
+    q: "Na cetose bovina, a hipoglicemia resulta em queda dos níveis de insulina e elevação de glucagon. Qual é a consequência direta desse balanço hormonal no tecido adiposo?",
+    opts: [
+      "Inibição da lipase hormônio-sensível com acúmulo de triglicerídeos",
+      "Ativação da lipase hormônio-sensível via cAMP com liberação de AGNE e glicerol",
+      "Estimulação da lipogênese hepática via acetil-CoA",
+      "Aumento da captação de glicose pelo adipócito via GLUT-4"
+    ],
+    c: 1,
+    coment: "O glucagon eleva o cAMP no adipócito, ativando a lipase hormônio-sensível que hidrolisa triglicerídeos, liberando AGNE e glicerol na circulação — combustível para a cetogênese hepática."
+  },
+  // ─── Q25 ───
+  {
+    q: "Qual é o mecanismo pelo qual a deficiência de cobalto predispõe à cetose em ruminantes?",
+    opts: [
+      "Reduz a síntese de insulina pelo pâncreas por falta de cofator enzimático",
+      "Leva a déficit de vitamina B12, prejudicando o metabolismo do propionato e a gliconeogênese",
+      "Aumenta diretamente a produção de ácido butírico pela microbiota ruminal",
+      "Inibe a síntese de oxalacetato pelo ciclo de Krebs no fígado"
+    ],
+    c: 1,
+    coment: "O cobalto é essencial para a síntese de vitamina B12 pela microbiota ruminal. A B12 é cofator da metilmalonil-CoA mutase, enzima-chave no metabolismo do propionato. Sem B12, o propionato não é convertido em succinil-CoA, reduzindo a gliconeogênese."
+  },
+  // ─── Q26 ───
+  {
+    q: "Em bovinos, qual é o período de maior risco para o desenvolvimento de cetose clínica primária?",
+    opts: [
+      "Último trimestre da gestação, antes do parto",
+      "Entre os dias 8 e 60 pós-parto, especialmente entre os dias 10 e 28",
+      "Entre 60 e 120 dias de lactação, no pico produtivo tardio",
+      "No período seco, especialmente nas vacas obesas"
+    ],
+    c: 1,
+    coment: "90% dos casos de cetose ocorrem nos primeiros 60 dias de lactação. O período mais crítico é entre os dias 10 e 28 pós-parto, quando a demanda de glicose para a glândula mamária é máxima e a ingestão de MS ainda está em recuperação."
+  },
+  // ─── Q27 ───
+  {
+    q: "Qual sinal clínico diferencia o timpanismo espumoso do timpanismo gasoso à sondagem orogástrica?",
+    opts: [
+      "No espumoso há saída de grande volume de gás livre ao introduzir a sonda; no gasoso, a sonda não progride",
+      "No espumoso a sonda fica obstruída por sólidos; no gasoso o líquido ruminal sai em jato",
+      "Ambos apresentam saída idêntica de gás — a diferença é apenas no odor",
+      "No gasoso há saída imediata de gás ao posicionar a sonda no rúmen; no espumoso, saída de espuma com pouco ou nenhum gás livre"
+    ],
+    c: 3,
+    coment: "No timpanismo gasoso livre, a sonda posicionada corretamente no rúmen libera imediatamente grande volume de gás. No espumoso, o gás está preso na espuma — sai pouco gás livre e frequentemente espuma pela sonda, confirmando o diagnóstico."
+  },
+  // ─── Q28 ───
+  {
+    q: "Vacas com escore de condição corporal (ECC) elevado no parto têm maior risco de cetose. Qual é o mecanismo fisiológico envolvido?",
+    opts: [
+      "Maior ECC aumenta a resistência à insulina e a lipólise espontânea no pós-parto",
+      "Vacas gordas produzem mais leite e têm maior demanda de glicose",
+      "O excesso de gordura intra-abdominal limita fisicamente a expansão ruminal, reduzindo a ingestão de MS",
+      "Ambos A e C estão corretos"
+    ],
+    c: 3,
+    coment: "Vacas com ECC elevado têm dois mecanismos combinados: resistência à insulina com lipólise exagerada E compressão física do rúmen pela gordura intra-abdominal, reduzindo em até 25% a ingestão de MS — agravando o BEN no pós-parto."
+  },
+  // ─── Q29 ───
+  {
+    q: "Qual é a diferença fisiopatológica entre cetose tipo I e cetose tipo II em vacas leiteiras?",
+    opts: [
+      "Tipo I: hipoglicemia com baixo acúmulo hepático de gordura; Tipo II: resistência à insulina com lipidose hepática significativa",
+      "Tipo I: ocorre em vacas primíparas; Tipo II: exclusiva de vacas pluríparas",
+      "Tipo I: associada a silagem butírica; Tipo II: associada a pastagem de leguminosas",
+      "Tipo I: tratada com glicose IV; Tipo II: tratada exclusivamente com glicocorticóides"
+    ],
+    c: 0,
+    coment: "Cetose tipo I: gliconeogênese insuficiente, hipoglicemia, alta cetonemia, sem lipidose hepática — ocorre no pico de lactação. Tipo II: resistência à insulina, hiperinsulinemia, grande acúmulo hepático de gordura — ocorre no peri-parto em vacas obesas."
+  },
+  // ─── Q30 ───
+  {
+    q: "Uma vaca leiteira, 20 dias pós-parto, apresenta odor adocicado na respiração, queda na produção de leite e anorexia para concentrado. Qual sequência diagnóstica confirma cetose clínica a campo?",
+    opts: [
+      "Hemograma completo + ultrassonografia abdominal + biópsia hepática",
+      "Dosagem sérica de cálcio + magnésio + fósforo para excluir distúrbios minerais",
+      "Teste de Rothera positivo no leite confirmado por glicemia < 40 mg/dL e/ou BHB > 1,4 mmol/L no sangue",
+      "Cultura ruminal + pH ruminal + contagem de protozoários para avaliar flora fermentativa"
+    ],
+    c: 2,
+    coment: "A campo, o diagnóstico de cetose clínica é confirmado pelo Teste de Rothera positivo no leite (detecta acetona e AcAc) associado à hipoglicemia (< 40 mg/dL) e/ou BHB sérico > 1,4 mmol/L. O contexto clínico — pós-parto recente, anorexia seletiva, hálito cetônico — orienta a suspeita antes dos exames laboratoriais."
+  },
+  // ─── Q31 ───
+  {
+    q: "Qual é a principal fonte de glicose para a glândula mamária na produção de lactose em vacas leiteiras?",
+    opts: [
+      "Absorção direta de glicose no intestino delgado a partir da dieta",
+      "Glicogenólise hepática a partir dos estoques de glicogênio",
+      "Gliconeogênese hepática a partir de propionato, aminoácidos glicogênicos e lactato",
+      "Oxidação de ácidos graxos de cadeia curta pela glândula mamária"
+    ],
+    c: 2,
+    coment: "Em ruminantes, a gliconeogênese hepática é a principal fonte de glicose — o propionato contribui com 30–50% da produção. A glândula mamária é o maior consumidor de glicose, utilizando-a para síntese de lactose."
+  },
+  // ─── Q32 ───
+  {
+    q: "No diagnóstico diferencial do timpanismo espumoso, qual condição também causa distensão abdominal esquerda mas se diferencia por resposta à sondagem?",
+    opts: [
+      "Deslocamento de abomaso à direita — apresenta ping no flanco esquerdo",
+      "Timpanismo gasoso — libera grande volume de gás livre à sondagem",
+      "Indigestão vagal — apresenta espuma idêntica ao timpanismo espumoso",
+      "Acidose ruminal aguda — o rúmen está flácido e com líquido aquoso"
+    ],
+    c: 1,
+    coment: "O timpanismo gasoso também causa distensão do flanco esquerdo, mas à sondagem há liberação imediata de grande volume de gás livre — diferentemente do espumoso, onde predomina espuma e pouco gás livre."
+  },
+  // ─── Q33 ───
+  {
+    q: "Por que a cetose é mais comum em vacas pluríparas do que em primíparas?",
+    opts: [
+      "Primíparas têm menor potencial leiteiro, gerando menos demanda de glicose",
+      "Pluríparas apresentam resistência à insulina crônica por múltiplas lactações",
+      "Primíparas têm flora ruminal mais eficiente na produção de propionato",
+      "Pluríparas têm menor ingestão de MS por competição hierárquica no cocho"
+    ],
+    c: 0,
+    coment: "Primíparas têm produção leiteira significativamente menor que pluríparas de alta produção — a demanda de glicose pela glândula mamária é menor, o que as protege do BEN severo. O aumento da incidência com o número de partos está diretamente ligado ao incremento produtivo."
+  },
+  // ─── Q34 ───
+  {
+    q: "Qual é o mecanismo pelo qual a monensina (ionóforo) auxilia na prevenção da cetose bovina?",
+    opts: [
+      "Inibe diretamente a lipase hormônio-sensível no tecido adiposo",
+      "Altera a flora ruminal aumentando a produção de propionato e reduzindo acetato e butirato",
+      "Estimula a síntese hepática de VLDL, facilitando a exportação de triglicerídeos",
+      "Aumenta a secreção de insulina pelo pâncreas, reduzindo a lipólise"
+    ],
+    c: 1,
+    coment: "A monensina inibe bactérias gram-positivas no rúmen, favorecendo gram-negativas produtoras de propionato. Isso aumenta a proporção de propionato (glicogênico) e reduz acetato e butirato (cetogênicos), fornecendo mais precursores para a gliconeogênese."
+  },
+  // ─── Q35 ───
+  {
+    q: "Bovino encontrado morto em pastagem de leguminosas com distensão abdominal severa e sinais de asfixia. Qual é o diagnóstico mais provável e o mecanismo de morte?",
+    opts: [
+      "Acidose ruminal — morte por choque endotóxico",
+      "Timpanismo espumoso grave — morte por compressão do diafragma e asfixia/colapso cardiovascular",
+      "Enterotoxemia por Clostridium perfringens — morte por toxemia hiperaguda",
+      "Deslocamento de abomaso à direita com volvo — morte por necrose intestinal"
+    ],
+    c: 1,
+    coment: "O timpanismo espumoso grave pode ser fatal em poucas horas. A distensão ruminal comprime o diafragma, impedindo a expansão pulmonar, e comprime a veia cava caudal, reduzindo o retorno venoso — morte por asfixia e/ou colapso cardiovascular."
+  },
+  // ─── Q36 ───
+  {
+    q: "Quais alterações laboratoriais são esperadas no perfil bioquímico de uma vaca com cetose clínica associada à lipidose hepática?",
+    opts: [
+      "Hiperglicemia, hipocalcemia e aumento de ureia sérica",
+      "Hipoglicemia, aumento de BHB, elevação de AST e GGT, hipercolesterolemia e hiperbilirubinemia",
+      "Alcalose metabólica, neutrofilia e aumento de fibrinogênio plasmático",
+      "Hipoproteinemia, trombocitopenia e redução de fosfatase alcalina"
+    ],
+    c: 1,
+    coment: "Na cetose com lipidose hepática espera-se: hipoglicemia (< 40 mg/dL), BHB elevado (> 1,4 mmol/L), aumento de AST e GGT (lesão hepatocelular), hipercolesterolemia, hiperbilirubinemia e AGNE elevados. O cálcio e o magnésio séricos podem estar levemente reduzidos nos animais anorécticos."
+  },
+  // ─── Q37 ───
+  {
+    q: "Na toxemia da prenhez de ovelhas, qual é a justificativa fisiológica para a indução do parto ou cesariana como parte do tratamento nos casos graves?",
+    opts: [
+      "Elimina a fonte de progesterona que inibe a gliconeogênese hepática materna",
+      "Remove a principal causa do déficit de glicose — os fetos são consumidores obrigatórios de glicose materna e sua retirada reverte a hipoglicemia",
+      "Reduz o volume abdominal, permitindo maior ingestão de matéria seca pela ovelha",
+      "Normaliza os níveis de cortisol materno que estavam inibindo a lipólise hepática"
+    ],
+    c: 1,
+    coment: "Os fetos ovinos são consumidores obrigatórios de glicose — utilizam-na como única fonte energética e criam um gradiente contínuo de glicose do sangue materno para o fetal. Em gestações múltiplas no terço final, essa demanda fetal supera a capacidade gliconeogênica materna. A remoção dos fetos elimina essa drenagem de glicose, sendo decisiva nos casos graves refratários ao tratamento clínico."
+  },
+  // ─── Q38 ───
+  {
+    q: "Qual é a função do oxalacetato no contexto da cetogênese hepática?",
+    opts: [
+      "Inibe diretamente a beta-oxidação dos ácidos graxos nas mitocôndrias",
+      "Condensa com acetil-CoA para entrar no ciclo de Krebs — sua escassez desvia acetil-CoA para corpos cetônicos",
+      "Estimula a síntese de VLDL pelo hepatócito para exportação de triglicerídeos",
+      "Atua como coenzima na conversão de propionato em succinil-CoA"
+    ],
+    c: 1,
+    coment: "O oxalacetato condensa com acetil-CoA formando citrato — entrada no ciclo de Krebs. Na cetose, o oxalacetato é desviado para a gliconeogênese, tornando-se escasso para o ciclo. O acetil-CoA acumulado é então convertido em acetoacetato e BHB."
+  },
+  // ─── Q39 ───
+  {
+    q: "Qual medida nutricional no período de transição (3 semanas pré-parto) é mais eficaz para prevenir a cetose bovina?",
+    opts: [
+      "Aumentar o fornecimento de gordura protegida para elevar a densidade energética",
+      "Introduzir gradualmente concentrado (1–2 kg/dia) para adaptar a microflora ruminal ao amido",
+      "Restringir a ingestão de MS para evitar sobrecarga hepática antes do parto",
+      "Fornecer dieta exclusivamente com silagem de milho para maximizar o propionato ruminal"
+    ],
+    c: 1,
+    coment: "A introdução gradual de concentrado no pré-parto adapta a microflora ruminal, aumentando a proporção de bactérias produtoras de propionato. Isso prepara o rúmen para a dieta de lactação e reduz o BEN pós-parto, principal fator de risco para cetose."
+  },
+  // ─── Q40 ───
+  {
+    q: "Qual é a consequência da cetose subclínica sobre a reprodução em vacas leiteiras?",
+    opts: [
+      "Antecipa o primeiro estro pós-parto por elevação dos níveis de estradiol",
+      "Aumenta a taxa de concepção por mobilização de reservas energéticas para os ovários",
+      "Causa alterações no ciclo estral, anestro, cistos ovarianos, menor secreção de progesterona e aumento do intervalo entre partos",
+      "Não tem impacto reprodutivo significativo — apenas afeta a produção leiteira"
+    ],
+    c: 2,
+    coment: "A cetose subclínica compromete seriamente a reprodução: anestro, cistos ovarianos, baixa progesterona, morte embrionária e aumento do intervalo entre partos são consequências documentadas. O BEN inibe o eixo hipotálamo-hipófise-ovário, prejudicando a retomada da ciclicidade."
+  }
+];
+
+
+
+/* ═══════════════════════════════════════════
+   ESTADO GLOBAL
+   ═══════════════════════════════════════════ */
+let nome='';
+let questoes=[];          // ordem aleatória
+let qIndex=0;
+let acertos=0, erros=0;
+let nota=0;
+let timerID=null, tempoRestante=TEMPO_POR_QUESTAO;
+let respondeu=false;
+let respostas=[];         // para gabarito
+let optsOrder=[];         // ordem das opts desta questão
+
+/* ═══════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════ */
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function fmt(n){ return n.toFixed(1).replace('.',','); }
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+/* ═══════════════════════════════════════════
+   INÍCIO
+   ═══════════════════════════════════════════ */
+function iniciar(){
+  nome  = document.getElementById('inp-nome').value.trim();
+  if(!nome){ alert('Por favor, informe seu nome completo.'); return; }
+
+  const chave = `quiz_clinica_2_${nome.toLowerCase().replace(/\s+/g,'_')}`;
+  if(localStorage.getItem(chave)){
+    alert('⚠️ Você já realizou este quiz.\nApenas uma tentativa é permitida por aluno.');
+    return;
+  }
+  localStorage.setItem(chave,'tentou');
+
+  // Aleatoriza questões e separa exatamente TOTAL_QUESTOES
+  questoes = shuffle(BANCO).slice(0, TOTAL_QUESTOES);
+  qIndex=0; acertos=0; erros=0; nota=0; respostas=[];
+  show('screen-quiz');
+  renderQuestao();
+}
+
+/* ═══════════════════════════════════════════
+   RENDERIZA QUESTÃO
+   ═══════════════════════════════════════════ */
+function renderQuestao(){
+  respondeu=false;
+  const q = questoes[qIndex];
+
+  // Progresso
+  document.getElementById('prog').style.width = (qIndex/TOTAL_QUESTOES*100)+'%';
+  document.getElementById('q-counter').textContent = `Questão ${qIndex+1} / ${TOTAL_QUESTOES}`;
+  document.getElementById('score-live').textContent = `Pontos: ${fmt(nota)}`;
+
+  // Texto
+  document.getElementById('q-text').innerHTML = `<b>Q${qIndex+1}.</b> ${q.q}`;
+
+  // Aleatoriza ordem das alternativas
+  const letras = ['A','B','C','D'];
+  const orig   = q.opts.map((txt,i)=>({txt,i}));
+  const shuffled = shuffle(orig);
+  optsOrder = shuffled; // guarda mapeamento
+
+  const wrap = document.getElementById('opts-wrap');
+  wrap.innerHTML='';
+  shuffled.forEach((item, pos)=>{
+    const div = document.createElement('div');
+    div.className='opt';
+    div.dataset.idx = item.i;  // índice original
+    div.innerHTML = `<span class="opt-letter">${letras[pos]}</span><span class="opt-text">${item.txt}</span>`;
+    div.addEventListener('click', ()=>selecionar(div));
+    wrap.appendChild(div);
+  });
+
+  // Feedback e botão
+  const fb = document.getElementById('feedback');
+  fb.className='feedback'; fb.textContent='';
+  const btn = document.getElementById('btn-next');
+  btn.textContent='Avançar ▶';
+
+  // Timer
+  iniciarTimer();
+}
+
+function selecionar(div){
+  if(respondeu) return;
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
+  div.classList.add('selected');
+}
+
+/* ═══════════════════════════════════════════
+   TIMER
+   ═══════════════════════════════════════════ */
+function iniciarTimer(){
+  clearInterval(timerID);
+  tempoRestante = TEMPO_POR_QUESTAO;
+  atualizarTimer();
+  timerID = setInterval(()=>{
+    tempoRestante--;
+    atualizarTimer();
+    if(tempoRestante<=0){ clearInterval(timerID); tempoEsgotado(); }
+  },1000);
+}
+
+function atualizarTimer(){
+  const arc = document.getElementById('timer-arc');
+  const num = document.getElementById('timer-num');
+  const circ = 163;
+  const pct  = tempoRestante/TEMPO_POR_QUESTAO;
+  arc.style.strokeDashoffset = circ*(1-pct);
+  num.textContent = tempoRestante;
+
+  arc.classList.remove('warn','urgent');
+  num.classList.remove('warn','urgent');
+  if(tempoRestante<=10 && tempoRestante>5){ arc.classList.add('warn'); num.classList.add('warn'); }
+  if(tempoRestante<=5){  arc.classList.add('urgent'); num.classList.add('urgent'); }
+}
+
+function tempoEsgotado(){
+  if(respondeu) return;
+  respondeu=true;
+  const q = questoes[qIndex];
+  erros++;
+  respostas.push({q:q.q, chose:null, correct:q.c, coment:q.coment, opts:q.opts});
+  revelarResposta(null);
+  // sem feedback
+}
+
+/* ═══════════════════════════════════════════
+   AVANÇAR
+   ═══════════════════════════════════════════ */
+function avancar(){
+  if(!respondeu){ confirmarResposta(); return; }
+  clearInterval(timerID);
+  qIndex++;
+  if(qIndex < TOTAL_QUESTOES){ renderQuestao(); }
+  else { mostrarResultado(); }
+}
+
+function confirmarResposta(){
+  clearInterval(timerID);
+  respondeu=true;
+  const q = questoes[qIndex];
+  const sel = document.querySelector('.opt.selected');
+
+  if(!sel){
+    // nenhuma selecionada — conta erro
+    erros++;
+    respostas.push({q:q.q, chose:null, correct:q.c, coment:q.coment, opts:q.opts});
+    revelarResposta(null);
+    // sem feedback
+  } else {
+    const idxOrig = parseInt(sel.dataset.idx);
+    respostas.push({q:q.q, chose:idxOrig, correct:q.c, coment:q.coment, opts:q.opts});
+    if(idxOrig === q.c){
+      acertos++;
+      nota += PONTOS_POR_ACERTO;
+      revelarResposta(idxOrig);
+      // sem feedback
+    } else {
+      erros++;
+      revelarResposta(idxOrig);
+      // sem feedback
+    }
+  }
+  document.getElementById('btn-next').textContent = qIndex<TOTAL_QUESTOES-1 ? 'Avançar ▶' : 'Ver Resultado ▶';
+}
+
+function revelarResposta(choseIdx){
+  document.querySelectorAll('.opt').forEach(opt=>{
+    opt.classList.add('locked');
+    const idx = parseInt(opt.dataset.idx);
+    if(idx === questoes[qIndex].c){ opt.classList.add('correct'); }
+    else if(choseIdx!==null && idx===choseIdx){ opt.classList.add('wrong'); }
+  });
+}
+
+function mostrarFeedback(tipo, msg){
+  const fb = document.getElementById('feedback');
+  fb.className = `feedback ${tipo} show`;
+  fb.textContent = msg;
+}
+
+/* ═══════════════════════════════════════════
+   RESULTADO
+   ═══════════════════════════════════════════ */
+function mostrarResultado(){
+  show('screen-result');
+  document.getElementById('res-nota').textContent = fmt(nota);
+  document.getElementById('res-acc').textContent  = acertos;
+  document.getElementById('res-err').textContent  = erros;
+
+  const pct = (nota/5)*100;
+  const msg = document.getElementById('msg-result');
+  if(pct>=90)     { msg.className='msg-result excelente'; msg.textContent='🏆 Excelente! Domínio completo do conteúdo!'; }
+  else if(pct>=70){ msg.className='msg-result bom';       msg.textContent='👍 Bom desempenho! Continue estudando os pontos de atenção.'; }
+  else if(pct>=50){ msg.className='msg-result regular';   msg.textContent='📚 Desempenho regular. Revise os tópicos assinalados.'; }
+  else            { msg.className='msg-result fraco';     msg.textContent='⚠️ Abaixo da média. Recomenda-se revisão completa do conteúdo.'; }
+
+  // Gabarito
+  const gabWrap = document.getElementById('gabarito-wrap');
+  gabWrap.innerHTML='';
+  respostas.forEach((r,i)=>{
+    const hit = r.chose===r.correct;
+    const div = document.createElement('div');
+    div.className = `gab-item ${hit?'hit':'miss'}`;
+    const corrTxt = r.opts[r.correct];
+    const choseTxt = r.chose!==null ? r.opts[r.chose] : '(não respondida)';
+    div.innerHTML=`
+      <span class="gab-num">${i+1}.</span>
+      <span class="gab-q">
+        <b>${r.q}</b><br/>
+        ${!hit?`<span style="color:#dc2626">Sua resposta: ${choseTxt}</span><br/>`:''}
+        <span style="color:#166534">✓ Correta: ${corrTxt}</span><br/>
+        <span style="color:#475569;font-style:italic;font-size:.82rem">${r.coment}</span>
+      </span>
+      <span class="gab-icon">${hit?'✅':'❌'}</span>`;
+    gabWrap.appendChild(div);
+  });
+
+  // Envio ao Google Sheets
+  enviarSheets();
+}
+
+/* ═══════════════════════════════════════════
+   ENVIO GOOGLE SHEETS
+   ═══════════════════════════════════════════ */
+function enviarSheets(){
+  const agora = new Date();
+  const data  = agora.toLocaleDateString('pt-BR');
+  const hora  = agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  const payload = {
+    acao: 'registrar',
+    nome, nota: fmt(nota),
+    acertos, erros, data, hora,
+    aba: ABA_SHEETS,
+    disciplina: DISCIPLINA
+  };
+
+  const msg = document.getElementById('saving-msg');
+  msg.textContent='⏳ Registrando resultado…';
+
+  if(!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('COLE_AQUI')){
+    msg.textContent='ℹ️ Configure a URL do Apps Script para registrar no Sheets.';
+    return;
+  }
+
+  const url = `${GOOGLE_SCRIPT_URL}?acao=registrar&nome=${encodeURIComponent(nome)}&nota=${encodeURIComponent(fmt(nota))}&acertos=${acertos}&erros=${erros}&data=${encodeURIComponent(data)}&hora=${encodeURIComponent(hora)}&aba=${encodeURIComponent(ABA_SHEETS)}&disciplina=${encodeURIComponent(DISCIPLINA)}`;
+
+  fetch(url, {method:'GET', mode:'no-cors'})
+    .then(()=>{ msg.textContent='✅ Resultado registrado com sucesso!'; })
+    .catch(()=>{ msg.textContent='⚠️ Não foi possível registrar. Verifique a URL do Apps Script.'; });
+}
+</script>
+</body>
+</html>
